@@ -9,16 +9,21 @@ import time
 import os
 
 
+'''
 items = ['Tritanium', 'Pyerite', 'Mexallon', 'Isogen', 'Nocxium', 'Zydrine', 'Megacyte', 'Heavy Water', 'Liquid Ozone', 'Helium Isotopes', 'Strontium Clathrates', 'Oxygen Isotopes', 'Nitrogen Isotopes', 'Hydrogen Isotopes']
+'''
+items = ['Tritanium' ]
 systems = ['Jita', 'Amarr', 'Rens', 'Dodixie']
-colors  = { 'Jita' : '#000000',
+
+
+colors  = { 
+            'Jita' : '#000000',
             'Amarr' : '#FFBF00', 
             'Rens' : '#FF6100', 
             'Dodixie' : '#37AEE5',
-           }
-'''            
             'Oursulaert' : '#01DB55', 
-'''
+           }
+
 
 '''
 items = ['Tritanium', 'Pyerite', 'Mexallon', 'Isogen', 'Nocxium', 'Zydrine', 'Megacyte', 'Heavy Water', 'Liquid Ozone', 'Helium Isotopes', 'Strontium Clathrates', 'Oxygen Isotopes', 'Nitrogen Isotopes', 'Hydrogen Isotopes']
@@ -178,61 +183,120 @@ plotting.hold(1)
 
 ref = systems[0]
 timeAxis = {}
-priceCurve_mean = {}
-priceCurve_sell = {}
-priceCurve_buy  = {}
+curve_priceMean = {}
+curve_priceSell = {}
+curve_priceBuy  = {}
 
-priceCurve_meanGain = {}
-priceCurve_sellGain = {}
-priceCurve_buyGain  = {}
+curve_meanGain = {}
+curve_sellGain = {}
+curve_buyGain  = {}
+
+curve_priceBuyMax   = {}
+curve_priceBuyMin   = {}
+curve_priceSellMax  = {}
+curve_priceSellMin  = {}
+curve_maxGainAllSystems  = {}
+curve_minGainAllSystems  = {}
+curve_meanGainAllSystems = {}
 
 history = sorted(os.listdir("./history/"))
 for item in items :
     for system in systems :
         timeAxis[item, system] = []
-        priceCurve_mean[item, system] = []
-        priceCurve_sell[item, system] = []
-        priceCurve_buy [item, system] = []
-        priceCurve_meanGain[item, system] = []
-        priceCurve_sellGain[item, system] = []
-        priceCurve_buyGain [item, system] = []
+        curve_priceMean[item, system] = []
+        curve_priceSell[item, system] = []
+        curve_priceBuy [item, system] = []
+        curve_meanGain[item, system] = []
+        curve_sellGain[item, system] = []
+        curve_buyGain [item, system] = []
 
         for (i, record) in enumerate(history):
             timeAxis[item, system].append(int(int(time.mktime(time.strptime(record,"%Y_%m_%d_%H:%M:%S")) - time.time()) / 864.0)/100.0)
             (p,g) = analyzeOrders(record,item,system)
             p = int(p * 100)/100.0
             g = int(g * 100)/100.0
-            priceCurve_mean[item, system].append(p)
-            priceCurve_sell[item, system].append(p+g)
-            priceCurve_buy [item, system].append(p-g)
+            curve_priceMean[item, system].append(p)
+            curve_priceSell[item, system].append(p+g)
+            curve_priceBuy [item, system].append(p-g)
             
-            priceCurve_meanGain[item, system].append(priceCurve_mean[item, system][i] / priceCurve_mean[item, ref][i])
-            priceCurve_sellGain[item, system].append(priceCurve_sell[item, system][i] / priceCurve_mean[item, ref][i])
-            priceCurve_buyGain [item, system].append(priceCurve_buy [item, system][i] / priceCurve_mean[item, ref][i])
+            curve_meanGain[item, system].append(curve_priceMean[item, system][i] / curve_priceMean[item, ref][i])
+            curve_sellGain[item, system].append(curve_priceSell[item, system][i] / curve_priceMean[item, ref][i])
+            curve_buyGain [item, system].append(curve_priceBuy [item, system][i] / curve_priceMean[item, ref][i])
 
             print item, "@", system, "on", record,  p, g
-        '''
-        plotting.plot(timeAxis[item, system], priceCurve_mean[item, system], 'k', color=colors[system], linewidth=2.5)
-        plotting.fill_between(timeAxis[item, system], priceCurve_sell[item, system], priceCurve_buy[item, system], alpha=0.2, edgecolor=colors[system], facecolor=colors[system])
-        print timeAxis
-        print priceMean
-        '''
 
 for item in items :
-    plotting.figure()
-    plotting.subplot(2, 1, 1)
-    plotting.plot(timeAxis[item, ref], priceCurve_mean[item, ref], 'yo-', color=colors[ref], linewidth=1.5)
-    plotting.fill_between(timeAxis[item, ref], priceCurve_sell[item, ref], priceCurve_buy[item, ref], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
-    plotting.ylabel(ref+' price')
-    axes = plotting.gca()
-    axes.grid(True)
+    curve_priceBuyMax[item]  = [] 
+    curve_priceBuyMin[item]  = []
+    curve_priceSellMax[item] = []
+    curve_priceSellMin[item] = []
+    curve_maxGainAllSystems[item]      = []
+    curve_minGainAllSystems[item]      = []
+    curve_meanGainAllSystems[item]     = []
+        
+    for (i, record) in enumerate(history):
+        buyMax = -1
+        buyMin = 999999999
+        sellMax = -1
+        sellMin = 999999999
+        for system in systems :
+            priceSell = curve_priceSell[item,system][i]
+            priceBuy  = curve_priceBuy [item,system][i]
+            if (priceSell < sellMin) :
+                sellMin = priceSell
+            if (priceSell > sellMax) :
+                sellMax = priceSell
+            if (priceBuy < buyMin) :
+                buyMin = priceBuy
+            if (priceBuy > buyMax) :
+                buyMax = priceBuy
 
-    plotting.subplot(2, 1, 2)
-    for system in systems :
-        plotting.ylabel('Profit margin')
-        plotting.plot(timeAxis[item, system], priceCurve_meanGain[item, system], 'r-', color=colors[system], linewidth=1.5)
-        plotting.fill_between(timeAxis[item, system], priceCurve_sellGain[item, system], priceCurve_buyGain[item, system], alpha=0.2, edgecolor=colors[system], facecolor=colors[system])
-        axes = plotting.gca()
-        axes.grid(True)
+        ''' Apply taxes '''
+        
+        ''' direct sale, 1.5% fees => 1.5% less profit '''
+        buyMax = buyMax * (1 - 0.015)  
+        ''' buy order, 0.9% fees => 0.9% higher price '''
+        buyMin = buyMin * (1 + 0.009)  
+        ''' sell order, 1.5+0.5M fees => 2% less profit '''
+        sellMax = sellMax * (1 - 0.020) 
+        ''' direct buy, no tax '''
+        sellMin = sellMin              
+        curve_priceBuyMax[item].append(buyMax)
+        curve_priceBuyMin[item].append(buyMin)
+        curve_priceSellMax[item].append(sellMax)
+        curve_priceSellMin[item].append(sellMin)
+        curve_maxGainAllSystems[item].append(sellMax / buyMin - 1)
+        curve_minGainAllSystems[item].append(buyMax / sellMin - 1)
+        curve_meanGainAllSystems[item].append(((buyMax / sellMin - 1) + (sellMax / buyMin - 1)) / 2)
+
     
-    plotting.savefig(item+'.png', bbox_inches='tight')
+
+
+
+for item in items :
+    fig = plotting.figure()
+    fig.suptitle(item, fontsize = 20)
+    
+    refPrice = fig.add_subplot(3, 1, 1)
+    refPrice.plot(timeAxis[item, ref], curve_priceMean[item, ref], 'yo-', color=colors[ref], linewidth=1.5)
+    refPrice.fill_between(timeAxis[item, ref], curve_priceSell[item, ref], curve_priceBuy[item, ref], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
+    refPrice.set_ylabel(ref+' price')
+    refPrice.grid(True)
+
+    relPrices = fig.add_subplot(3, 1, 2, sharex=refPrice)
+    for system in systems :
+        relPrices.set_ylabel('Relative prices')
+        relPrices.plot(timeAxis[item, system], curve_meanGain[item, system], 'r-', color=colors[system], linewidth=1.5)
+        relPrices.fill_between(timeAxis[item, system], curve_sellGain[item, system], curve_buyGain[item, system], alpha=0.2, edgecolor=colors[system], facecolor=colors[system])
+        relPrices.grid(True)
+    
+    profit = fig.add_subplot(3, 1, 3, sharex=refPrice)
+    profit.set_ylabel('Best profit margin')
+    profit.plot(timeAxis[item, system], curve_meanGainAllSystems[item], 'yo-', color=colors[ref], linewidth=1.5)
+    profit.fill_between(timeAxis[item, system], curve_maxGainAllSystems[item], curve_minGainAllSystems[item], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
+    profit.grid(True)
+
+    plotting.setp(refPrice.get_xticklabels(), visible=False)
+    plotting.setp(relPrices.get_xticklabels(), visible=False)
+
+    plotting.savefig(item+'.png', bbox_inches='tight', dpi = 200)
