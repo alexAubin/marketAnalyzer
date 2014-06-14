@@ -9,12 +9,11 @@ import time
 import os
 
 
-'''
 items = ['Tritanium', 'Pyerite', 'Mexallon', 'Isogen', 'Nocxium', 'Zydrine', 'Megacyte', 'Heavy Water', 'Liquid Ozone', 'Helium Isotopes', 'Strontium Clathrates', 'Oxygen Isotopes', 'Nitrogen Isotopes', 'Hydrogen Isotopes']
 '''
 items = ['Tritanium' ]
+'''
 systems = ['Jita', 'Amarr', 'Rens', 'Dodixie']
-
 
 colors  = { 
             'Jita' : '#000000',
@@ -178,61 +177,54 @@ def fetchNewData(itemsList, systemsList) :
 fetchNewData(items, systems)
 '''
 
-plotting.clf()
-plotting.hold(1)
+def makePlot(item) :
 
-ref = systems[0]
-timeAxis = {}
-curve_priceMean = {}
-curve_priceSell = {}
-curve_priceBuy  = {}
+    plotting.clf()
+    plotting.hold(1)
 
-curve_meanGain = {}
-curve_sellGain = {}
-curve_buyGain  = {}
+    ref = systems[0]
+    timeAxis = {}
+    curve_priceMean = {}
+    curve_priceSell = {}
+    curve_priceBuy  = {}
 
-curve_priceBuyMax   = {}
-curve_priceBuyMin   = {}
-curve_priceSellMax  = {}
-curve_priceSellMin  = {}
-curve_maxGainAllSystems  = {}
-curve_minGainAllSystems  = {}
-curve_meanGainAllSystems = {}
+    curve_meanGain = {}
+    curve_sellGain = {}
+    curve_buyGain  = {}
+        
+    history = sorted(os.listdir("./history/"))
 
-history = sorted(os.listdir("./history/"))
-for item in items :
     for system in systems :
-        timeAxis[item, system] = []
-        curve_priceMean[item, system] = []
-        curve_priceSell[item, system] = []
-        curve_priceBuy [item, system] = []
-        curve_meanGain[item, system] = []
-        curve_sellGain[item, system] = []
-        curve_buyGain [item, system] = []
-
+        timeAxis[system] = []
+        curve_priceMean[system] = []
+        curve_priceSell[system] = []
+        curve_priceBuy [system] = []
+        curve_meanGain[system] = []
+        curve_sellGain[system] = []
+        curve_buyGain [system] = []
+    
         for (i, record) in enumerate(history):
-            timeAxis[item, system].append(int(int(time.mktime(time.strptime(record,"%Y_%m_%d_%H:%M:%S")) - time.time()) / 864.0)/100.0)
+            timeAxis[system].append(int(int(time.mktime(time.strptime(record,"%Y_%m_%d_%H:%M:%S")) - time.time()) / 864.0)/100.0)
             (p,g) = analyzeOrders(record,item,system)
             p = int(p * 100)/100.0
             g = int(g * 100)/100.0
-            curve_priceMean[item, system].append(p)
-            curve_priceSell[item, system].append(p+g)
-            curve_priceBuy [item, system].append(p-g)
+            curve_priceMean[system].append(p)
+            curve_priceSell[system].append(p+g)
+            curve_priceBuy [system].append(p-g)
             
-            curve_meanGain[item, system].append(curve_priceMean[item, system][i] / curve_priceMean[item, ref][i])
-            curve_sellGain[item, system].append(curve_priceSell[item, system][i] / curve_priceMean[item, ref][i])
-            curve_buyGain [item, system].append(curve_priceBuy [item, system][i] / curve_priceMean[item, ref][i])
+            curve_meanGain[system].append(curve_priceMean[system][i] / curve_priceMean[ref][i])
+            curve_sellGain[system].append(curve_priceSell[system][i] / curve_priceMean[ref][i])
+            curve_buyGain [system].append(curve_priceBuy [system][i] / curve_priceMean[ref][i])
 
             print item, "@", system, "on", record,  p, g
 
-for item in items :
-    curve_priceBuyMax[item]  = [] 
-    curve_priceBuyMin[item]  = []
-    curve_priceSellMax[item] = []
-    curve_priceSellMin[item] = []
-    curve_maxGainAllSystems[item]      = []
-    curve_minGainAllSystems[item]      = []
-    curve_meanGainAllSystems[item]     = []
+    curve_priceBuyMax        = [] 
+    curve_priceBuyMin        = []
+    curve_priceSellMax       = []
+    curve_priceSellMin       = []
+    curve_maxGainAllSystems  = []
+    curve_minGainAllSystems  = []
+    curve_meanGainAllSystems = []
         
     for (i, record) in enumerate(history):
         buyMax = -1
@@ -240,8 +232,8 @@ for item in items :
         sellMax = -1
         sellMin = 999999999
         for system in systems :
-            priceSell = curve_priceSell[item,system][i]
-            priceBuy  = curve_priceBuy [item,system][i]
+            priceSell = curve_priceSell[system][i]
+            priceBuy  = curve_priceBuy [system][i]
             if (priceSell < sellMin) :
                 sellMin = priceSell
             if (priceSell > sellMax) :
@@ -261,42 +253,62 @@ for item in items :
         sellMax = sellMax * (1 - 0.020) 
         ''' direct buy, no tax '''
         sellMin = sellMin              
-        curve_priceBuyMax[item].append(buyMax)
-        curve_priceBuyMin[item].append(buyMin)
-        curve_priceSellMax[item].append(sellMax)
-        curve_priceSellMin[item].append(sellMin)
-        curve_maxGainAllSystems[item].append(sellMax / buyMin - 1)
-        curve_minGainAllSystems[item].append(buyMax / sellMin - 1)
-        curve_meanGainAllSystems[item].append(((buyMax / sellMin - 1) + (sellMax / buyMin - 1)) / 2)
+        
+        curve_priceBuyMax.append(buyMax)
+        curve_priceBuyMin.append(buyMin)
+        curve_priceSellMax.append(sellMax)
+        curve_priceSellMin.append(sellMin)
+        curve_maxGainAllSystems.append(sellMax / buyMin - 1)
+        curve_minGainAllSystems.append(buyMax / sellMin - 1)
+        curve_meanGainAllSystems.append(((buyMax / sellMin - 1) + (sellMax / buyMin - 1)) / 2)
 
-    
-
-
-
-for item in items :
     fig = plotting.figure()
     fig.suptitle(item, fontsize = 20)
     
     refPrice = fig.add_subplot(3, 1, 1)
-    refPrice.plot(timeAxis[item, ref], curve_priceMean[item, ref], 'yo-', color=colors[ref], linewidth=1.5)
-    refPrice.fill_between(timeAxis[item, ref], curve_priceSell[item, ref], curve_priceBuy[item, ref], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
+    refPrice.plot(timeAxis[ref], curve_priceMean[ref], 'yo-', color=colors[ref], linewidth=1.5)
+    refPrice.fill_between(timeAxis[ref], curve_priceSell[ref], curve_priceBuy[ref], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
     refPrice.set_ylabel(ref+' price')
     refPrice.grid(True)
 
     relPrices = fig.add_subplot(3, 1, 2, sharex=refPrice)
     for system in systems :
         relPrices.set_ylabel('Relative prices')
-        relPrices.plot(timeAxis[item, system], curve_meanGain[item, system], 'r-', color=colors[system], linewidth=1.5)
-        relPrices.fill_between(timeAxis[item, system], curve_sellGain[item, system], curve_buyGain[item, system], alpha=0.2, edgecolor=colors[system], facecolor=colors[system])
+        relPrices.plot(timeAxis[system], curve_meanGain[system], 'r-', color=colors[system], linewidth=1.5)
+        relPrices.fill_between(timeAxis[system], curve_sellGain[system], curve_buyGain[system], alpha=0.2, edgecolor=colors[system], facecolor=colors[system])
         relPrices.grid(True)
     
     profit = fig.add_subplot(3, 1, 3, sharex=refPrice)
     profit.set_ylabel('Best profit margin')
-    profit.plot(timeAxis[item, system], curve_meanGainAllSystems[item], 'yo-', color=colors[ref], linewidth=1.5)
-    profit.fill_between(timeAxis[item, system], curve_maxGainAllSystems[item], curve_minGainAllSystems[item], alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
+    profit.plot(timeAxis[ref], curve_meanGainAllSystems, 'yo-', color=colors[ref], linewidth=1.5)
+    profit.fill_between(timeAxis[ref], curve_maxGainAllSystems, curve_minGainAllSystems, alpha=0.1, edgecolor=colors[ref], facecolor=colors[ref])
+    profit.plot([timeAxis[ref][0], timeAxis[ref][-1]], [0.05, 0.05], 'k-', lw=1.5, color="#0077ff")
     profit.grid(True)
 
     plotting.setp(refPrice.get_xticklabels(), visible=False)
     plotting.setp(relPrices.get_xticklabels(), visible=False)
 
-    plotting.savefig(item+'.png', bbox_inches='tight', dpi = 200)
+    plotting.savefig('plots/'+item+'.png', bbox_inches='tight', dpi = 200)
+
+def makeHtmlPage(items) :
+    plotPerLine = 3
+
+    print '<html>'
+    print '<body>'
+    print '<table width="100%">'
+    for (i, item) in enumerate(items) :
+        if (i % plotPerLine == 0) :
+            print '  <tr>'
+        print '    <td><img width="90%" src="plots/'+item+'.png"></td>'
+        if (i % plotPerLine == plotPerLine-1) or (i == len(items)-1) :
+            print '  </tr>'
+    print '</table>' 
+    print '</body>'
+    print '</html>'
+
+
+'''
+makeHtmlPage(items)
+'''
+for item in items :
+    makePlot(item)
