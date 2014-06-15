@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plotting
 import numpy as math
 from xml.dom import minidom
@@ -10,9 +12,6 @@ import os
 
 
 items = ['Tritanium', 'Pyerite', 'Mexallon', 'Isogen', 'Nocxium', 'Zydrine', 'Megacyte', 'Heavy Water', 'Liquid Ozone', 'Helium Isotopes', 'Strontium Clathrates', 'Oxygen Isotopes', 'Nitrogen Isotopes', 'Hydrogen Isotopes']
-'''
-items = ['Tritanium' ]
-'''
 systems = ['Jita', 'Amarr', 'Rens', 'Dodixie']
 
 colors  = { 
@@ -173,10 +172,6 @@ def fetchNewData(itemsList, systemsList) :
     p.wait()
 
 
-'''
-fetchNewData(items, systems)
-'''
-
 def makePlot(item) :
 
     plotting.clf()
@@ -306,9 +301,11 @@ def makeHtmlPage(items) :
     print '</body>'
     print '</html>'
 
+fetchNewData(items, systems)
+
+for item in items :
+    makePlot(item)
 
 '''
 makeHtmlPage(items)
 '''
-for item in items :
-    makePlot(item)

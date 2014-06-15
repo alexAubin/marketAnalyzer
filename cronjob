@@ -1,0 +1,1 @@
+0 0,6,12,18 * * * cd /home/djidane/public_html/marketAnalyzer && python2.7 main.py > log  2>&1
